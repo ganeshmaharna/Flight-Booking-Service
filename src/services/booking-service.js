@@ -2,7 +2,7 @@ const axios = require("axios");
 const { StatusCodes } = require("http-status-codes");
 
 const { BookingRepository } = require("../repositories");
-const { ServerConfig } = require("../config");
+const { ServerConfig, QueueConfig } = require("../config");
 const db = require("../models");
 const AppError = require("../utils/errors/app-error");
 const { Enums } = require("../utils/common");
@@ -29,6 +29,7 @@ async function createBooking(data) {
       }
     );
     await transaction.commit();
+
     return booking;
   } catch (error) {
     await transaction.rollback();
@@ -70,6 +71,11 @@ async function makePayment(data) {
       transaction
     );
     await transaction.commit();
+    QueueConfig.sendData({
+      recepientEmail: "ganeshmaharna76@gmail.com",
+      subject: "Flight Booked",
+      text: `Booking successfully done for the flight ${data.bookingId}`,
+    });
   } catch (error) {
     await transaction.rollback();
     throw error;
